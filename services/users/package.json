@@ -1,0 +1,27 @@
+{
+  "name": "users",
+  "version": "1.0.0",
+  "description": "A microservice for handling users and teams",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "echo \"This for now\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/parrothacker1/parrot-ctfd.git"
+  },
+  "author": "parrothacker1",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/parrothacker1/parrot-ctfd/issues"
+  },
+  "homepage": "https://github.com/parrothacker1/parrot-ctfd#readme",
+  "dependencies": {
+    "@fastify/jwt": "^9.0.2",
+    "fastify": "^5.2.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.2"
+  }
+}
