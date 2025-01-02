@@ -1,3 +1,0 @@
-import { TeamModel } from "../schema"
-
-

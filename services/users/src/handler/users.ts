@@ -1,3 +1,0 @@
-import { UserModel } from "../schema"
-
-
