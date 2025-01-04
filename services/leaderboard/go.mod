@@ -1,4 +1,4 @@
-module github.com/parrothacker1/parrot-ctfd/leaderboard
+module github.com/parrothacker1/HackHive/leaderboard
 
 go 1.23.2
 
