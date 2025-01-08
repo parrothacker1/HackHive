@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"time"
 
 	"github.com/alexedwards/argon2id"
 	"github.com/google/uuid"
@@ -34,23 +33,19 @@ func (u *User) BeforeSave(tx *gorm.DB) error {
     u.Points = nil
   }
   if (u.Password == "") {
-    fmt.Println(u)
     return fmt.Errorf("The password is not set")
   }
   return nil
 }
 
-func (u *User) AfterDelete(tx *gorm.DB) error { // TODO: need testing
-  fmt.Print("Testing afterdelete: ");fmt.Println(u.UserID)
+func (u *User) AfterDelete(tx *gorm.DB) error {
   if u.Role == "user" && u.TeamID != nil {
     var team Team
-    fmt.Println("I am triggered")
-    tx.First(&team,u.TeamID)
-    if u.UserID == *team.Leader {
+    tx.Table("teams").Where("team_id = ?",u.TeamID).First(&team)
+    if u.UserID == team.Leader {
       var next_leader User 
       tx.Where("team_id = ?",team.TeamID).Order("created_at asc").First(&next_leader)
       tx.Model(team).Update("team_leader",next_leader.UserID)
-      fmt.Println("i am triggered while setting new value")
     }
   }
   return nil
@@ -76,7 +71,7 @@ type Team struct {
   gorm.Model
   TeamID string `gorm:"column:team_id;primaryKey;unique" validate:"uuid4" json:"teamID"`
   Name string `gorm:"column:team_name;not null" validate:"required" json:"name"`
-  Leader *string `gorm:"column:team_leader;unique" validate:"required,uuid4" json:"leader"`
+  Leader string `gorm:"column:team_leader;unique" validate:"required,uuid4" json:"leader"`
   Points int `gorm:"column:team_points" validate:"gte=0" json:"teamPoints"`
   Secret string `gorm:"column:team_secret" json:"-"`
   LeaderUser *User `gorm:"foreignKey:Leader;references:UserID" json:"-"`
@@ -97,5 +92,6 @@ func (t *Team) BeforeCreate(tx *gorm.DB) error {
 }
 
 func (t* Team) AfterDelete(tx *gorm.DB) error {
-  return tx.Model(&User{}).Where("team_id = ?",t.TeamID).Update("team_id",nil).Error
+  result := tx.Table("users").Where("team_id = ?",t.TeamID).Updates(map[string]interface{}{"team_id":nil})
+  return result.Error
 }

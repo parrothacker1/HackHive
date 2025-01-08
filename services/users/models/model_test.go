@@ -5,13 +5,14 @@ import (
 	"log"
 	"testing"
 
-	"github.com/parrothacker1/HackHive/testutils"
+	"github.com/parrothacker1/Solvelt/users/testutils"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var testDB *gorm.DB
+
 
 func init() {
   container,err := testutils.SetupTestDB()
@@ -76,7 +77,7 @@ func TestTeam(t *testing.T) {
     testTeam = Team {
       Name: "TestTeam",
       Points: 0,
-      Leader: &leader.UserID,
+      Leader: leader.UserID,
     }
    require.NoError(t,testDB.Create(&testTeam).Error,"Error in creating team")
    require.NoError(t,testDB.Model(&leader).Update("team_id",testTeam.TeamID).Error,"Error in Updating Leader User")
@@ -84,11 +85,13 @@ func TestTeam(t *testing.T) {
   })
   t.Run("Checking Team if leader is deleted",func(t *testing.T) {
     var testTeam Team 
-    testDB.Find(&testTeam).Where("team_name = ?","TestTeam")
-    fmt.Println(*testTeam.Leader)
-    testDB.Where("user_id = ?",testTeam.Leader).Unscoped().Delete(&User{})
-    testDB.Find(&testTeam).Where("team_name = ?","TestTeam")
-    fmt.Println(*testTeam.Leader)
+    require.NoError(t,testDB.Find(&testTeam).Where("team_name = ?","TestTeam").Error,"Error in getting team")
+    var leaderUser,normalUser User
+    require.NoError(t,testDB.Find(&leaderUser).Where("user_id = ?",testTeam.Leader).Error,"Error in getting the leader user")
+    require.NoError(t,testDB.Delete(&leaderUser).Error,"Error in deleting leader")
+    require.NoError(t,testDB.Find(&normalUser).Where("user_name = ?","NormalTestTeam").Error,"Error in getting the normal team member")
+    require.NoError(t,testDB.Find(&testTeam).Where("team_name = ?","TestTeam").Error,"Error in getting team after deletion")
+    require.Equal(t,normalUser.UserID,testTeam.Leader,"The leader is not being updated after deletion")
   })
   t.Run("Checking User if Team is deleted",func(t *testing.T) {
     var testUser User
@@ -98,4 +101,5 @@ func TestTeam(t *testing.T) {
     testDB.First(&testUser)
     require.Equal(t,(*string)(nil),testUser.TeamID,"The TeamID is not null.The AfterDelete Hook is not working")
   })
+  testutils.CleanUpDB(t,testutils.TestContainer)
 }
