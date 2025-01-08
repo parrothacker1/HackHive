@@ -1,4 +1,4 @@
-module github.com/parrothacker1/HackHive/leaderboard
+module github.com/parrothacker1/Solvelt/leaderboard
 
 go 1.23.2
 

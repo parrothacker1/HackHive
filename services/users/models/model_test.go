@@ -3,7 +3,6 @@ package models
 import (
 	"fmt"
 	"log"
-	"reflect"
 	"testing"
 
 	"github.com/parrothacker1/HackHive/testutils"
@@ -37,19 +36,66 @@ func init() {
 
 func TestUsers(t *testing.T) {
   t.Run("Creating a Admin User",func(t *testing.T) {
-    result := testDB.Create(&User{
+    testUser := User {
       Name: "Admin",
       Email: "admin@hackhive.com",
-      Password: "testing",
       Role: "admin",
-    })
+    }
+    testUser.SetPassword("testing")
+    result := testDB.Create(&testUser)
     require.NoError(t,result.Error,"Failed to create an admin user")
     var testAdmin User 
     testDB.First(&testAdmin)
-    fmt.Println(reflect.TypeOf(nil))
     require.Equal(t,(*string)(nil),testAdmin.TeamID,"The teamID is not null, which is supposed to be null")
     require.Equal(t,(*int64)(nil),testAdmin.Points,"The points is not null, which is supposed to be null")
-//    require.Equal()
+    check,err := testAdmin.ComparePassword("testing")
+    require.NoError(t,err,"There is an error when doing hash comparison")
+    require.True(t,check,"The password and the hash are not equal")
+    testDB.Delete(&testAdmin)
   })
+}
 
+func TestTeam(t *testing.T) {
+  t.Run("Creating a Normal Team",func(t *testing.T) {
+    var leader,normal User
+    var testTeam Team
+    leader = User {
+      Name: "LeaderTestTeam",
+      Email: "leader@hackhive.com",
+      Role: "user",
+    }
+    leader.SetPassword("leader")
+    normal = User{
+      Name: "NormalTestTeam",
+      Email: "normal@hackhive.com",
+      Role: "user",
+    }
+    normal.SetPassword("normal")
+    require.NoError(t,testDB.Create(&leader).Error,"Error in creating leader user")
+    require.NoError(t,testDB.Create(&normal).Error,"Error in creating normal user")
+    testTeam = Team {
+      Name: "TestTeam",
+      Points: 0,
+      Leader: &leader.UserID,
+    }
+   require.NoError(t,testDB.Create(&testTeam).Error,"Error in creating team")
+   require.NoError(t,testDB.Model(&leader).Update("team_id",testTeam.TeamID).Error,"Error in Updating Leader User")
+   require.NoError(t,testDB.Model(&normal).Update("team_id",testTeam.TeamID).Error,"Error in Updating Normal User")
+  })
+  t.Run("Checking Team if leader is deleted",func(t *testing.T) {
+    var testTeam Team 
+    testDB.Find(&testTeam).Where("team_name = ?","TestTeam")
+    fmt.Println(*testTeam.Leader)
+    testDB.Where("user_id = ?",testTeam.Leader).Unscoped().Delete(&User{})
+    testDB.Find(&testTeam).Where("team_name = ?","TestTeam")
+    fmt.Println(*testTeam.Leader)
+  })
+  t.Run("Checking User if Team is deleted",func(t *testing.T) {
+    var testUser User
+    var testTeam Team 
+    testDB.Find(&testTeam).Where("team_name = ?","TestTeam")
+    testDB.Delete(&testTeam)
+    testDB.First(&testUser)
+    require.Equal(t,(*string)(nil),testUser.TeamID,"The TeamID is not null.The AfterDelete Hook is not working")
+  })
 }

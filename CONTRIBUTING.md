@@ -1,4 +1,4 @@
-# Contributing to HackHive 
+# Contributing to Solvelt
 Thank you for considering to contribute to this project! 🎉 Your efforts, whether small or large, help improve this project and make it more robust. Below I have mentioned where we really need contributions. The rest of the area is kind of sorted, but I would welcome any helping hand and even suggestions to improve at some place would be really appreciated. 😊
 
 ## How You Can Contribute 

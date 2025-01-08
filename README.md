@@ -1,10 +1,10 @@
-# HackHive
+# Solvelt
 
 ```
 The Project is still under development.
 ```
 
-Welcome to HackHive. A CTF framework (more precisely just the backend) under development which aims to make a ready-to-go CTF platform for your event. This platform will support both static and dynamic flags and uses Docker for spinning up the challenge.
+Welcome to Solvelt. A CTF framework (more precisely just the backend) under development which aims to make a ready-to-go CTF platform for your event. This platform will support both static and dynamic flags and uses Docker for spinning up the challenge.
 
 ## Contents
 * Getting Started
@@ -17,7 +17,7 @@ Welcome to HackHive. A CTF framework (more precisely just the backend) under dev
 To get started with working on the project, first you will have to clone the repository.To clone the repository, run 
 
 ```
-git clone https://github.com/parrothacker1/HackHive
+git clone https://github.com/parrothacker1/Solvelt
 ```
 
 To start coding and working, I would suggest installing rust, golang and python (for now this is subjected to change depending on the code and the web framework that suits the service best).Also I would recommend using Docker for building the image as all of ours services will be dockerized. (PS: If you have docker, you might be able to avoid installing python and the rest as you can directly compile on it.)

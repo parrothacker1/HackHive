@@ -1,10 +1,17 @@
 package models
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
+	"time"
+
+	"github.com/alexedwards/argon2id"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
+// TODO: abstract the password so that the object is not able to access it
 type User struct {
   gorm.Model
   UserID string `gorm:"column:user_id;primaryKey;unique" validate:"uuid4" json:"userID"`
@@ -18,44 +25,77 @@ type User struct {
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
   u.UserID = uuid.NewString()
-  u.Password = u.Password // hash it 
+  return nil
+}
+
+func (u *User) BeforeSave(tx *gorm.DB) error {
   if u.Role == "admin" || u.Role == "moderator" {
     u.TeamID = nil
     u.Points = nil
   }
+  if (u.Password == "") {
+    fmt.Println(u)
+    return fmt.Errorf("The password is not set")
+  }
   return nil
 }
 
-func (u *User) AfterDelete(tx *gorm.DB) error { //need testing
-  if u.Role == "user" {
+func (u *User) AfterDelete(tx *gorm.DB) error { // TODO: need testing
+  fmt.Print("Testing afterdelete: ");fmt.Println(u.UserID)
+  if u.Role == "user" && u.TeamID != nil {
     var team Team
+    fmt.Println("I am triggered")
     tx.First(&team,u.TeamID)
-    if u.UserID == team.Leader {
+    if u.UserID == *team.Leader {
       var next_leader User 
       tx.Where("team_id = ?",team.TeamID).Order("created_at asc").First(&next_leader)
       tx.Model(team).Update("team_leader",next_leader.UserID)
+      fmt.Println("i am triggered while setting new value")
     }
   }
   return nil
 }
 
+func (u *User) SetPassword(password string) error {
+  hashed,err := argon2id.CreateHash(password,argon2id.DefaultParams)
+  if err != nil {
+    return err
+  }
+  u.Password = hashed
+  return nil
+}
+
+func (u *User) ComparePassword(password string) (bool,error) {
+  if (u.Password == "") {
+    return false,fmt.Errorf("The password is empty.")
+  }
+  return argon2id.ComparePasswordAndHash(password,u.Password)
+}
+
 type Team struct {
   gorm.Model
-  TeamID string `gorm:"column:team_id;primaryKey;unique" json:"teamID"`
-  Name string `gorm:"column:team_name;not null" json:"name"`
-  Leader string `gorm:"column:team_leader;unique" json:"leader"`
-  Points int `gorm:"column:team_points" json:"teamPoints"`
+  TeamID string `gorm:"column:team_id;primaryKey;unique" validate:"uuid4" json:"teamID"`
+  Name string `gorm:"column:team_name;not null" validate:"required" json:"name"`
+  Leader *string `gorm:"column:team_leader;unique" validate:"required,uuid4" json:"leader"`
+  Points int `gorm:"column:team_points" validate:"gte=0" json:"teamPoints"`
   Secret string `gorm:"column:team_secret" json:"-"`
-  LeaderUser User `gorm:"foreignKey:Leader;references:UserID" json:"-"`
+  LeaderUser *User `gorm:"foreignKey:Leader;references:UserID" json:"-"`
 }
 
-func (t *Team) BeforeCreate(tx *gorm.DB) error { // need testing
+func (t *Team) BeforeCreate(tx *gorm.DB) error {
   t.TeamID = uuid.NewString()
-  t.Secret = "testing" // this will be a random string
-  return nil
+  var err error
+  t.Secret,err = func() (string,error) {
+    bytes := make([]byte,32)
+    _, err := rand.Read(bytes)
+    if err != nil {
+      return "",err
+    }
+    return hex.EncodeToString(bytes),nil
+  }()
+  return err
 }
 
-func (t* Team) AfterDelete(tx *gorm.DB) error { // need testing
-  tx.Model(&User{}).Where("team_id = ?",t.TeamID).Update("team_id",nil)
-  return nil
+func (t* Team) AfterDelete(tx *gorm.DB) error {
+  return tx.Model(&User{}).Where("team_id = ?",t.TeamID).Update("team_id",nil).Error
 }
