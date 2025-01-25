@@ -9,6 +9,7 @@ import (
 )
 
 var TestContainerContext context.Context
+var TestContainer testcontainers.Container
 
 func SetupTestDB() (testcontainers.Container,error) {
   TestContainerContext = context.Background()
@@ -16,9 +17,9 @@ func SetupTestDB() (testcontainers.Container,error) {
     Image: "postgres:17-alpine",
     ExposedPorts: []string{"5432/tcp"},
     Env: map[string]string{
-      "POSTGRES_USER": "tester_hackhive",
-      "POSTGRES_PASSWORD": "testing_hackhive",
-      "POSTGRES_DB": "testdb_hackhive",
+      "POSTGRES_USER": "tester_solvelt",
+      "POSTGRES_PASSWORD": "testing_solvelt",
+      "POSTGRES_DB": "testdb_solvelt",
     },
     WaitingFor: wait.ForListeningPort("5432/tcp"),
   }
