@@ -15,10 +15,10 @@ var testDB *gorm.DB
 
 func TestMain(m *testing.M) {
 	container, err := testutils.SetupTestDB()
+  log.Println("Created container for postgres")
 	if err != nil {
 		log.Fatalf("Failed to create Test Postgres Container: %v", err)
 	}
-
 	containerHost, err := container.Host(testutils.TestContainerContext)
 	if err != nil {
 		log.Fatalf("Failed to get host from container: %v", err)
@@ -36,11 +36,11 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Failed to connect to the postgres container: %v", err)
 	}
-
+  log.Println("Successfully connected to the postgres database.")
 	if err := testDB.AutoMigrate(&User{}, &Team{}); err != nil {
 		log.Fatalf("Failed to migrate models: %v", err)
 	}
-
+  log.Println("Successfully migrated models.")
 	m.Run()
 }
 
@@ -137,5 +137,5 @@ func TestDeleteTeamAndCheckUsers(t *testing.T) {
 
 func TestCleanup(t *testing.T) {
 	testutils.CleanUpDB(t, testutils.TestContainer)
+  log.Println("Clearing the container.")
 }
-

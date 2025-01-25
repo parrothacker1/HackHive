@@ -13,13 +13,13 @@ import (
 // TODO: abstract the password so that the object is not able to access it
 type User struct {
   gorm.Model
-  UserID string `gorm:"column:user_id;primaryKey;unique" validate:"uuid4" json:"userID"`
-  Name string `gorm:"column:user_name;not null" validate:"required,min=3" json:"name"`
-  Email string `gorm:"column:user_email" validate:"required,email" json:"email"`
-  Password string `gorm:"column:user_password;not null" validate:"required" json:"-"`
+  UserID string `gorm:"column:user_id;primaryKey;unique" validate:"omitempty,uuid4" json:"userID"`
+  Name string `gorm:"column:user_name;not null" validate:"required,min=3,max=50" json:"name"`
+  Email string `gorm:"column:user_email;unique" validate:"required,email" json:"email"`
+  Password string `gorm:"column:user_password;not null" validate:"required" json:"password"`
   Role string `gorm:"column:user_role;not null" validate:"oneof=user admin moderator,required" json:"role"` // admin | moderator | user 
-  TeamID *string `gorm:"column:team_id" validate:"uuid4" json:"teamID"`
-  Points *int64 `gorm:"column:user_points" validate:"gte=0" json:"points"`
+  TeamID *string `gorm:"column:team_id" validate:"omitempty,uuid4" json:"teamID"`
+  Points *int64 `gorm:"column:user_points" validate:"omitempty,gte=0" json:"points"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
@@ -69,7 +69,7 @@ func (u *User) ComparePassword(password string) (bool,error) {
 
 type Team struct {
   gorm.Model
-  TeamID string `gorm:"column:team_id;primaryKey;unique" validate:"uuid4" json:"teamID"`
+  TeamID string `gorm:"column:team_id;primaryKey;unique" validate:"omitempty,uuid4" json:"teamID"`
   Name string `gorm:"column:team_name;not null" validate:"required,min=3" json:"name"`
   Leader string `gorm:"column:team_leader;unique" validate:"required,uuid4" json:"leader"`
   Points int `gorm:"column:team_points" validate:"gte=0" json:"teamPoints"`
