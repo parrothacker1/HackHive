@@ -3,8 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/parrothacker1/Solvelt/users/config"
 	"github.com/parrothacker1/Solvelt/users/database"
 	"github.com/parrothacker1/Solvelt/users/models"
 	"gorm.io/gorm"
@@ -60,12 +63,31 @@ func CreateUser() http.HandlerFunc {
       json.NewEncoder(w).Encode(resp)
       return
     }
-    resp := response {
-      Status: "success",
-      Message: "User created successfully",
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256,jwt.MapClaims{
+      "iss":"Solvelt-users",
+      "exp": time.Now().Add(6*time.Hour),
+      "iat": time.Now(),
+      "user_id": user.UserID,
+    })
+    if tokenString,err := token.SignedString(config.JWTSecret);err != nil {
+      resp := response {
+        Status: "fail",
+        Message: "error with generating JWT",
+      }
+      w.WriteHeader(http.StatusInternalServerError)
+      json.NewEncoder(w).Encode(resp)
+    } else {
+      type response_jwt struct {
+        Status string
+        Token string
+      } 
+      resp := response_jwt {
+        Status: "success",
+        Token: tokenString,
+      }
+      w.WriteHeader(http.StatusOK)
+      json.NewEncoder(w).Encode(resp)
     }
-    w.WriteHeader(http.StatusOK)
-    json.NewEncoder(w).Encode(resp)
   }
 }
 
@@ -90,5 +112,11 @@ func GetUser() http.HandlerFunc {
 func Login() http.HandlerFunc {
   return func(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("login the user"))
+  }
+}
+
+func ResetPassword() http.HandlerFunc {
+  return func(w http.ResponseWriter, r *http.Request) {
+    w.Write([]byte("reset password of user"))
   }
 }
