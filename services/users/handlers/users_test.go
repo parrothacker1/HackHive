@@ -33,6 +33,7 @@ func TestCreateUser(t *testing.T) {
   rr1 := httptest.NewRecorder()
   CreateUser().ServeHTTP(rr1,req)
   require.Equal(t,http.StatusConflict,rr1.Code,"Creating the user with same email is working which should not.")
+  fmt.Println(rr.Body)
 }
 
 /*
