@@ -30,8 +30,9 @@ func TestCreateUser(t *testing.T) {
   if err != nil {
     t.Fatalf("Error in creating request: %v",err)
   }
-  CreateUser().ServeHTTP(rr,req)
-  require.Equal(t,http.StatusConflict,rr.Code,"Creating the same user is working which should not (conflict)")
+  rr1 := httptest.NewRecorder()
+  CreateUser().ServeHTTP(rr1,req)
+  require.Equal(t,http.StatusConflict,rr1.Code,"Creating the user with same email is working which should not.")
 }
 
 /*

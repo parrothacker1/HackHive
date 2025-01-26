@@ -46,7 +46,10 @@ func ConnnectToDatabase() {
     password,
     db,
   )
-  DB, err = gorm.Open(postgres.Open(connection_str), &gorm.Config{})
+  DB, err = gorm.Open(postgres.Open(connection_str), &gorm.Config{
+    SkipDefaultTransaction: true,
+    TranslateError: true,
+  })
   if err != nil {
     logrus.Fatal("Failed to connect to the database")
   }

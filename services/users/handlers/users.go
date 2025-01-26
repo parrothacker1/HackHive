@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -29,8 +28,7 @@ func CreateUser() http.HandlerFunc {
       json.NewEncoder(w).Encode(resp)
       return
     }
-    err := json.NewDecoder(r.Body).Decode(&user)
-    if err != nil {
+    if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
       resp := response {
         Status: "error",
         Message: "Invalid body format",
@@ -39,8 +37,7 @@ func CreateUser() http.HandlerFunc {
       json.NewEncoder(w).Encode(resp)
       return
     }
-    err = validate.Struct(user)
-    if err != nil {
+    if err := validate.Struct(user); err != nil {
       resp := response {
         Status: "error",
         Message: "Error with validation of data: "+err.Error(),
@@ -50,9 +47,7 @@ func CreateUser() http.HandlerFunc {
       return
     }
     user.SetPassword(user.Password)
-    err = database.DB.Create(&user).Error
-    fmt.Println(err)
-    if err != nil {
+    if err := database.DB.Create(&user).Error; err != nil {
       resp := response {
         Status: "fail",
         Message: "Failed to create the user: "+err.Error(),

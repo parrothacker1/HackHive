@@ -1,0 +1,4 @@
+1) Use containerd for handling containers runtime
+2) Use apache cassandra for handling container data like containerid,teamid,etc 
+3) Use postgres to save data like static,image_name,challenge_name etc 
+4) L7 cacher for handling repeated requests
