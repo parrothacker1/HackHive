@@ -63,12 +63,19 @@ func CreateUser() http.HandlerFunc {
       json.NewEncoder(w).Encode(resp)
       return
     }
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256,jwt.MapClaims{
-      "iss":"Solvelt-users",
-      "exp": time.Now().Add(6*time.Hour),
-      "iat": time.Now(),
-      "user_id": user.UserID,
-    })
+    type claims struct {
+      UserID string `json:"user_id"`
+      jwt.RegisteredClaims;
+    }
+    custom_claims := claims {
+      user.UserID,
+      jwt.RegisteredClaims{
+        ExpiresAt: jwt.NewNumericDate(time.Now().Add(6*time.Hour)),
+        Issuer: "Solvelt",
+        IssuedAt: jwt.NewNumericDate(time.Now()),
+      },
+    }
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256,custom_claims)
     if tokenString,err := token.SignedString(config.JWTSecret);err != nil {
       resp := response {
         Status: "fail",
