@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"log"
+	"os"
 	"testing"
 
 	"github.com/parrothacker1/Solvelt/users/testutils"
@@ -14,6 +15,7 @@ import (
 var testDB *gorm.DB
 
 func TestMain(m *testing.M) {
+  os.Setenv("GO_ENV","test")
 	container, err := testutils.SetupTestDB()
   log.Println("Created container for postgres")
 	if err != nil {

@@ -10,6 +10,10 @@ import (
 	"gorm.io/gorm"
 )
 
+type Tabler interface {
+  TableName() string
+}
+
 // TODO: abstract the password so that the object is not able to access it
 type User struct {
   gorm.Model
@@ -20,6 +24,10 @@ type User struct {
   Role string `gorm:"column:user_role;not null" validate:"oneof=user admin moderator,required" json:"role"` // admin | moderator | user 
   TeamID *string `gorm:"column:team_id" validate:"omitempty,uuid4" json:"teamID"`
   Points *int64 `gorm:"column:user_points" validate:"omitempty,gte=0" json:"points"`
+}
+
+func (User) TableName() string {
+  return "users"
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
@@ -75,6 +83,10 @@ type Team struct {
   Points int `gorm:"column:team_points" validate:"gte=0" json:"teamPoints"`
   Secret string `gorm:"column:team_secret" json:"-"`
   LeaderUser *User `gorm:"foreignKey:Leader;references:UserID" json:"-"`
+}
+
+func (Team) TableName() string {
+  return "teams"
 }
 
 func (t *Team) BeforeCreate(tx *gorm.DB) error {
