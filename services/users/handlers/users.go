@@ -63,12 +63,9 @@ func CreateUser() http.HandlerFunc {
       json.NewEncoder(w).Encode(resp)
       return
     }
-    type claims struct {
-      UserID string `json:"user_id"`
-      jwt.RegisteredClaims;
-    }
-    custom_claims := claims {
+    custom_claims := jwtclaims {
       user.UserID,
+      user.Role,
       jwt.RegisteredClaims{
         ExpiresAt: jwt.NewNumericDate(time.Now().Add(6*time.Hour)),
         Issuer: "Solvelt",
@@ -116,11 +113,105 @@ func GetUser() http.HandlerFunc {
   }
 }
 
+
 func Login() http.HandlerFunc {
+  validate := validator.New()
   return func(w http.ResponseWriter, r *http.Request) {
-    w.Write([]byte("login the user"))
-  }
+      type body struct {
+          Email    string `json:"email" validate:"required,email"`
+          Password string `json:"password" validate:"required,min=4"`
+      }
+      var request body
+      w.Header().Set("Content-Type", "application/json")
+      if r.Body == nil {
+          resp := response{
+              Status:  "error",
+              Message: "Invalid body",
+          }
+          w.WriteHeader(http.StatusBadRequest)
+          json.NewEncoder(w).Encode(resp)
+          return
+      }
+      if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+        resp := response{
+          Status:  "error",
+          Message: "Invalid body format",
+        }
+        w.WriteHeader(http.StatusBadRequest)
+        json.NewEncoder(w).Encode(resp)
+        return
+      }
+      if err := validate.Struct(request); err != nil {
+        resp := response{
+          Status:  "error",
+          Message: "Error with validation of data: " + err.Error(),
+        }
+        w.WriteHeader(http.StatusBadRequest)
+        json.NewEncoder(w).Encode(resp)
+        return
+      }
+      var user models.User
+      if err := database.DB.Table("users").Where("email = ?", request.Email).First(&user).Error; err != nil {
+        if err == gorm.ErrRecordNotFound { 
+          resp := response{
+            Status:  "fail",
+            Message: "The email or password is invalid",
+          }
+          w.WriteHeader(http.StatusUnauthorized)
+          json.NewEncoder(w).Encode(resp)
+          return
+        } else {
+          resp := response{
+            Status: "error",
+            Message: "Error in fetching data",
+          }
+          w.WriteHeader(http.StatusInternalServerError)
+          json.NewEncoder(w).Encode(resp)
+          return
+        }
+      }
+      if ok, _ := user.ComparePassword(request.Password); ok {
+        claims := jwtclaims{
+          user.UserID,
+          user.Role,
+          jwt.RegisteredClaims{
+            ExpiresAt: jwt.NewNumericDate(time.Now().Add(6 * time.Hour)),
+            Issuer:    "Solvelt",
+            IssuedAt:  jwt.NewNumericDate(time.Now()),
+          },
+        }
+        token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+        tokenString, err := token.SignedString(config.JWTSecret)
+        if err != nil {
+          resp := response{
+            Status:  "fail",
+            Message: "Error with generating JWT",
+          }
+          w.WriteHeader(http.StatusInternalServerError)
+          json.NewEncoder(w).Encode(resp)
+          return
+        }
+        type response_jwt struct {
+          Status string
+          Token string
+        }
+        resp := response_jwt{
+          Status: "success",
+          Token:  tokenString,
+        }
+        w.WriteHeader(http.StatusOK)
+        json.NewEncoder(w).Encode(resp)
+      } else {
+        resp := response{
+          Status:  "fail",
+          Message: "The email or password is invalid",
+        }
+        w.WriteHeader(http.StatusUnauthorized)
+        json.NewEncoder(w).Encode(resp)
+      }
+    }
 }
+
 
 func ResetPassword() http.HandlerFunc {
   return func(w http.ResponseWriter, r *http.Request) {
