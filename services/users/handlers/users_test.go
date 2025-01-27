@@ -2,17 +2,16 @@ package handlers
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/parrothacker1/Solvelt/users/config"
 	"github.com/stretchr/testify/require"
 )
-
-func TestUser(t *testing.T) {
-  fmt.Println("testing user")
-}
 
 func TestCreateUser(t *testing.T) {
   body := `{"name":"Tester_Solvelt","email":"test@gmail.com","password":"tester","role":"admin"}`
@@ -24,6 +23,18 @@ func TestCreateUser(t *testing.T) {
   rr := httptest.NewRecorder()
   CreateUser().ServeHTTP(rr,req)
   require.Equal(t,http.StatusOK,rr.Code,"The CreateUser handler is not working")
+  var response struct {
+    Status string;
+    Token string;
+  }
+  json.NewDecoder(rr.Body).Decode(&response)
+  _,err = jwt.Parse(response.Token,func(t *jwt.Token) (interface{}, error) {
+    if _,ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+      return nil,fmt.Errorf("Wrong algorithm")
+    }
+    return config.JWTSecret,nil
+  })
+  require.NoError(t,err,"JWT cannot be verified which it should.")
   body = `{"name":"Tester_Solvelt1","email":"test@gmail.com","password":"tester","role":"user"}`
   req,err = http.NewRequest("POST","/api/users",bytes.NewBuffer([]byte(body)))
   req.Header.Set("Content-Type","application/json")
@@ -33,42 +44,4 @@ func TestCreateUser(t *testing.T) {
   rr1 := httptest.NewRecorder()
   CreateUser().ServeHTTP(rr1,req)
   require.Equal(t,http.StatusConflict,rr1.Code,"Creating the user with same email is working which should not.")
-  fmt.Println(rr.Body)
 }
-
-/*
-package main
-
-import (
-	"net/http"
-	"net/http/httptest"
-	"testing"
-)
-
-// Test the HelloHandler
-func TestHelloHandler(t *testing.T) {
-	// Create a new HTTP request to pass to the handler
-	req, err := http.NewRequest("GET", "/hello", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Create a ResponseRecorder to capture the response
-	rr := httptest.NewRecorder()
-
-	// Call the HelloHandler directly with the mock request and response recorder
-	handler := http.HandlerFunc(HelloHandler)
-	handler.ServeHTTP(rr, req)
-
-	// Check the status code of the response
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("expected status %v, got %v", http.StatusOK, status)
-	}
-
-	// Check the body of the response
-	expected := "Hello, world!"
-	if rr.Body.String() != expected {
-		t.Errorf("expected body %v, got %v", expected, rr.Body.String())
-	}
-}
-*/
