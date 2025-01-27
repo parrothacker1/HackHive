@@ -114,7 +114,7 @@ func GetUser() http.HandlerFunc {
 }
 
 
-func Login() http.HandlerFunc {
+func LoginUser() http.HandlerFunc {
   validate := validator.New()
   return func(w http.ResponseWriter, r *http.Request) {
       type body struct {
@@ -151,7 +151,7 @@ func Login() http.HandlerFunc {
         return
       }
       var user models.User
-      if err := database.DB.Table("users").Where("email = ?", request.Email).First(&user).Error; err != nil {
+      if err := database.DB.Table("users").Where("user_email = ?", request.Email).First(&user).Error; err != nil {
         if err == gorm.ErrRecordNotFound { 
           resp := response{
             Status:  "fail",

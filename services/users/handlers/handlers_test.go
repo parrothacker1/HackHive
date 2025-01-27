@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"log"
+	"os"
 	"testing"
 
 	"github.com/parrothacker1/Solvelt/users/database"
@@ -14,6 +15,7 @@ import (
 
 
 func TestMain(m *testing.M) {
+  os.Setenv("GO_ENV","test")
   log.Println("Starting handler tests")
   container, err := testutils.SetupTestDB()
   log.Println("Created container for postgres")
@@ -30,15 +32,12 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to get port from container: %v", err)
 	}
 
-	endpoint := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-    "tester_solvelt", "testing_solvelt", containerHost, containerPort.Port(), "testdb_solvelt")
-
+	endpoint := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable","tester_solvelt", "testing_solvelt", containerHost, containerPort.Port(), "testdb_solvelt")
 	database.DB, err = gorm.Open(postgres.Open(endpoint), &gorm.Config{
     SkipDefaultTransaction: true,
     TranslateError: true,
-  })
-	if err != nil {
-		log.Fatalf("Failed to connect to the postgres container: %v", err)
+  });if err != nil {
+    log.Fatalf("Failed to connect to the postgres container: %v", err)
 	}
   log.Println("Successfully connected to the postgres database.")
 	if err := database.DB.AutoMigrate(&models.User{}, &models.Team{}); err != nil {
@@ -46,9 +45,8 @@ func TestMain(m *testing.M) {
 	}
   log.Println("Successfully migrated models.")
   m.Run()
-  Cleanup()
 }
 
-func Cleanup() {
-  fmt.Println("testing cleanup")
+func TestCleanup(t *testing.T) {
+  testutils.CleanUpDB(t,testutils.TestContainer)
 }
