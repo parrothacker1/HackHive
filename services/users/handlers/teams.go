@@ -4,26 +4,22 @@ import (
 	"net/http"
 )
 
-func CreateTeam() http.HandlerFunc {
-  return func(w http.ResponseWriter, r *http.Request) {
-    w.Write([]byte("creating team"))
-  }
+var CreateTeam http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
+  w.Write([]byte("creating team"))
 }
 
-func UpdateTeam() http.HandlerFunc {
-  return func(w http.ResponseWriter, r *http.Request) {
-    w.Write([]byte("updating team"))
-  }
+var UpdateTeam http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
+  w.Write([]byte("updating team"))
 }
 
-func DeleteTeam() http.HandlerFunc {
-  return func(w http.ResponseWriter, r *http.Request) {
-    w.Write([]byte("deleting team"))
-  }
+var DeleteTeam http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
+  w.Write([]byte("deleting team"))
 }
 
-func GetTeam() http.HandlerFunc {
-  return func(w http.ResponseWriter, r *http.Request) {
-    w.Write([]byte("get details of team team"))
-  }
+var GetTeam http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
+  w.Write([]byte("get details of team"))
+}
+
+var JoinTeam http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
+  w.Write([]byte("user join a team"))
 }

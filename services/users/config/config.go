@@ -10,6 +10,7 @@ import (
 
 var ConnectionString string = "sqlite:///./sqlite.db"
 var JWTSecret []byte = []byte("testing")
+var EventLog string = "./events.log"
 
 // TODO: take JWT secret from env
 // TODO: also make sure that this takes data if it is only going for server .. or else stick to normal
@@ -56,9 +57,18 @@ func config_jwt() {
   }
 }
 
+func config_log() {
+  if log_file := os.Getenv("EVENT_LOG"); log_file == "" {
+    logrus.Fatal("The EVENT_LOG is not specified")
+  } else {
+    EventLog = log_file
+  }
+}
+
 func init() {
   if os.Getenv("GO_ENV") != "test" {
     config_db()
     config_jwt()
+    config_log()
   }
 }

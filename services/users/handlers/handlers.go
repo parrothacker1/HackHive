@@ -11,6 +11,7 @@ type response struct {
 
 type jwtclaims struct {
   UserID string `json:"user_id"`
+  TeamID string `json:"team_id"`
   Role string `json:"role"`
   jwt.RegisteredClaims
 }

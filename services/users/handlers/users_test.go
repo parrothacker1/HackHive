@@ -21,7 +21,7 @@ func TestCreateUser(t *testing.T) {
     t.Fatalf("Error in creating request: %v",err)
   }
   rr := httptest.NewRecorder()
-  CreateUser().ServeHTTP(rr,req)
+  CreateUser.ServeHTTP(rr,req)
   require.Equal(t,http.StatusOK,rr.Code,"The CreateUser handler is not working")
   var response struct {
     Status string;
@@ -42,7 +42,7 @@ func TestCreateUser(t *testing.T) {
     t.Fatalf("Error in creating request: %v",err)
   }
   rr1 := httptest.NewRecorder()
-  CreateUser().ServeHTTP(rr1,req)
+  CreateUser.ServeHTTP(rr1,req)
   require.Equal(t,http.StatusConflict,rr1.Code,"Creating the user with same email is working which should not.")
 }
 
@@ -54,7 +54,7 @@ func TestLogin(t *testing.T) {
     t.Fatalf("Error in creating request: %v",err)
   }
   rr := httptest.NewRecorder()
-  LoginUser().ServeHTTP(rr,req)
+  LoginUser.ServeHTTP(rr,req)
   require.Equal(t,http.StatusOK,rr.Code,"The LoginUser is not working")
   var response struct {
     Status string;
@@ -75,7 +75,7 @@ func TestLogin(t *testing.T) {
     t.Fatalf("Error in creating request: %v",err)
   }
   rr1 := httptest.NewRecorder()
-  LoginUser().ServeHTTP(rr1,req)
+  LoginUser.ServeHTTP(rr1,req)
   require.Equal(t,http.StatusUnauthorized,rr1.Code,"The email which does not exists is not returning 401")
   body = `{"email":"test@gmail.com","password":"testeridk"}`
   req,err = http.NewRequest("POST","/api/users/login",bytes.NewBuffer([]byte(body)))
@@ -84,6 +84,6 @@ func TestLogin(t *testing.T) {
     t.Fatalf("Error in creating request: %v",err)
   }
   rr2 := httptest.NewRecorder()
-  LoginUser().ServeHTTP(rr2,req)
+  LoginUser.ServeHTTP(rr2,req)
   require.Equal(t,http.StatusUnauthorized,rr2.Code,"The email which exists but wrong password is not returning 401")
 }

@@ -3,6 +3,9 @@ package routers
 import (
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/parrothacker1/Solvelt/users/utils/loggers"
 )
 
 type Route struct {
@@ -30,6 +33,7 @@ func (r *Router) Handle(method, path string,handler http.HandlerFunc,middleware 
 }
 
 func (rr *Router) ServeHTTP(w http.ResponseWriter,r *http.Request) {
+  start := time.Now()
   for _,route := range rr.routes {
     if strings.EqualFold(r.Method,route.Method) && r.URL.Path == route.Path {
       if len(route.Middleware) != 0 {
@@ -39,8 +43,19 @@ func (rr *Router) ServeHTTP(w http.ResponseWriter,r *http.Request) {
       } else {
         route.Handler.ServeHTTP(w,r)
       }
+      loggers.ServerLogger.Infof("execution time=%dμs, method=%s, path=%s, ip=%s",
+        time.Since(start).Microseconds(),
+        r.Method,
+        r.URL.Path,
+        r.URL.Host,
+      )
       return
     }
   }
   http.NotFound(w,r)
+  loggers.ServerLogger.Infof("execution time=%dμs, method=%s, path=%s, ip=%s",
+  time.Since(start).Microseconds(),
+  r.Method,
+  r.URL.Path,
+  r.URL.Host)
 }

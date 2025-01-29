@@ -8,7 +8,7 @@ import (
 
 	"github.com/parrothacker1/Solvelt/users/database"
 	"github.com/parrothacker1/Solvelt/users/models"
-	"github.com/parrothacker1/Solvelt/users/testutils"
+	"github.com/parrothacker1/Solvelt/users/utils/tests"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -17,17 +17,17 @@ import (
 func TestMain(m *testing.M) {
   os.Setenv("GO_ENV","test")
   log.Println("Starting handler tests")
-  container, err := testutils.SetupTestDB()
+  container, err := tests.SetupTestDB()
   log.Println("Created container for postgres")
 	if err != nil {
 		log.Fatalf("Failed to create Test Postgres Container: %v", err)
 	}
-	containerHost, err := container.Host(testutils.TestContainerContext)
+	containerHost, err := container.Host(tests.TestContainerContext)
 	if err != nil {
 		log.Fatalf("Failed to get host from container: %v", err)
 	}
 
-	containerPort, err := container.MappedPort(testutils.TestContainerContext, "5432/tcp")
+	containerPort, err := container.MappedPort(tests.TestContainerContext, "5432/tcp")
 	if err != nil {
 		log.Fatalf("Failed to get port from container: %v", err)
 	}
@@ -48,5 +48,5 @@ func TestMain(m *testing.M) {
 }
 
 func TestCleanup(t *testing.T) {
-  testutils.CleanUpDB(t,testutils.TestContainer)
+  tests.CleanUpDB(t,tests.TestContainer)
 }
