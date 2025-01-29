@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/parrothacker1/Solvelt/users/config"
-	"github.com/parrothacker1/Solvelt/users/database"
+	"github.com/parrothacker1/Solvelt/users/utils/database"
 	"github.com/parrothacker1/Solvelt/users/utils/loggers"
 	"github.com/parrothacker1/Solvelt/users/routers"
 	"github.com/sirupsen/logrus"

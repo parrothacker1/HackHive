@@ -8,7 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/parrothacker1/Solvelt/users/config"
-	"github.com/parrothacker1/Solvelt/users/database"
+	"github.com/parrothacker1/Solvelt/users/utils/database"
 	"github.com/parrothacker1/Solvelt/users/models"
 	"gorm.io/gorm"
 )

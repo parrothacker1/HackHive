@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/parrothacker1/Solvelt/users/handlers"
-	"github.com/parrothacker1/Solvelt/users/middlewares"
+	"github.com/parrothacker1/Solvelt/users/utils/middlewares"
 )
 
 var TeamRouter *Router

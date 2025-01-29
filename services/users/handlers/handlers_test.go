@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/parrothacker1/Solvelt/users/database"
+	"github.com/parrothacker1/Solvelt/users/utils/database"
 	"github.com/parrothacker1/Solvelt/users/models"
 	"github.com/parrothacker1/Solvelt/users/utils/tests"
 	"gorm.io/driver/postgres"
