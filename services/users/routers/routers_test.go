@@ -27,7 +27,6 @@ func TestRouter(t *testing.T) {
         w.Write([]byte("0"))
         return
       }
-      next.ServeHTTP(w,r)
     }
   }
   router_test.Handle(http.MethodGet,"/",test_handler,middleware)
