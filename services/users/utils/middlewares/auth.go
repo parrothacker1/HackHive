@@ -23,14 +23,14 @@ var AuthMiddleware http.HandlerFunc = func(w http.ResponseWriter, r *http.Reques
   var ctx context.Context
   if authHeader == "" {
     ctx = context.WithValue(r.Context(),"stop",true)
-    r.WithContext(ctx)
+    r = r.WithContext(ctx)
     http.Error(w, `{"status":"fail","message":"Missing Authorization header"}`, http.StatusUnauthorized)
 		return
   }
 	parts := strings.Split(authHeader, " ")
   if len(parts) != 2 || parts[0] != "Bearer" {
     ctx = context.WithValue(r.Context(),"stop",true)
-    r.WithContext(ctx)
+    r = r.WithContext(ctx)
 		http.Error(w, `{"status":"fail","message":"Invalid Authorization format"}`, http.StatusUnauthorized)
 		return
   }
@@ -43,32 +43,32 @@ var AuthMiddleware http.HandlerFunc = func(w http.ResponseWriter, r *http.Reques
 	})
   if err != nil || !token.Valid {
     ctx = context.WithValue(r.Context(),"stop",true)
-    r.WithContext(ctx)
+    r = r.WithContext(ctx)
 		http.Error(w, `{"status":"fail","message":"Invalid token"}`, http.StatusUnauthorized)
 		return
   }
   claims,ok := token.Claims.(jwtclaims)
   if !ok {
     ctx = context.WithValue(r.Context(),"stop",true)
-    r.WithContext(ctx)
+    r = r.WithContext(ctx)
     http.Error(w,`{"status":"fail","message":"Invalid token claims"}`,http.StatusUnauthorized)
     return
   }
   exp,err := claims.GetExpirationTime()
   if err != nil || exp.Time.Before(time.Now()) {
     ctx = context.WithValue(r.Context(),"stop",true)
-    r.WithContext(ctx)
+    r = r.WithContext(ctx)
     http.Error(w,`{"status":"fail","message":"Token expired"}`,http.StatusUnauthorized)
     return
   }
   if issuer,err := claims.GetIssuer(); err != nil || issuer != "Solvelt" {
     ctx = context.WithValue(r.Context(),"stop",true)
-    r.WithContext(ctx)
+    r = r.WithContext(ctx)
     http.Error(w,`{"status":"fail","message":"Invalid token"}`,http.StatusUnauthorized)
     return
   }
   ctx = context.WithValue(r.Context(),"user_id",claims.UserID)
   ctx = context.WithValue(ctx,"team_id",claims.TeamID)
   ctx = context.WithValue(ctx,"role",claims.Role)
-  r.WithContext(ctx)
+  r = r.WithContext(ctx)
 }

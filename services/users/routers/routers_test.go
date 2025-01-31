@@ -20,13 +20,10 @@ func TestRouter(t *testing.T) {
     w.WriteHeader(http.StatusOK)
     w.Write([]byte("1"))
   }
-  middleware := func(next http.HandlerFunc) http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
-      if (r.Header.Get("Deny") == "1") {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte("0"))
-        return
-      }
+  middleware := func(w http.ResponseWriter, r *http.Request) {
+    if (r.Header.Get("Deny") == "1") {
+      w.WriteHeader(http.StatusBadRequest)
+      w.Write([]byte("0"))
     }
   }
   router_test.Handle(http.MethodGet,"/",test_handler,middleware)

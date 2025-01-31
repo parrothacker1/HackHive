@@ -36,10 +36,12 @@ func (rr *Router) ServeHTTP(w http.ResponseWriter,r *http.Request) {
   start := time.Now()
   for _,route := range rr.routes {
     if strings.EqualFold(r.Method,route.Method) && r.URL.Path == route.Path {
+      w.Header().Set("Content-Type", "application/json")
       if len(route.Middleware) != 0 {
         for _,middleware := range route.Middleware {
           middleware.ServeHTTP(w,r)
-          if r.Context().Value("stop") == true {
+          stop,ok := r.Context().Value("stop").(bool)
+          if stop == true && ok {
             break
           }
         }
