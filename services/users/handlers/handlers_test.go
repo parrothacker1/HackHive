@@ -6,11 +6,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/parrothacker1/Solvelt/users/utils/database"
 	"github.com/parrothacker1/Solvelt/users/models"
+	"github.com/parrothacker1/Solvelt/users/utils/database"
 	"github.com/parrothacker1/Solvelt/users/utils/tests"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 
@@ -36,6 +37,7 @@ func TestMain(m *testing.M) {
 	database.DB, err = gorm.Open(postgres.Open(endpoint), &gorm.Config{
     SkipDefaultTransaction: true,
     TranslateError: true,
+    Logger: logger.Default.LogMode(logger.Silent),
   });if err != nil {
     log.Fatalf("Failed to connect to the postgres container: %v", err)
 	}

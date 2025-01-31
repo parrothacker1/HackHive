@@ -8,8 +8,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/parrothacker1/Solvelt/users/config"
-	"github.com/parrothacker1/Solvelt/users/utils/database"
 	"github.com/parrothacker1/Solvelt/users/models"
+	"github.com/parrothacker1/Solvelt/users/utils/database"
 	"gorm.io/gorm"
 )
 
@@ -20,7 +20,6 @@ import (
 var CreateUser http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
   validate := validator.New()
   var user models.User
-  w.Header().Set("Content-Type","application/json")
   if r.Body == nil {
     resp := response {
       Status: "error",
@@ -99,7 +98,41 @@ var UpdateUser http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
 }
 
 var DeleteUser http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
-  w.Write([]byte("deleting user"))
+  user_id,ok := r.Context().Value("user_id").(string)
+  if user_id == "" || !ok {
+    resp := response {
+      Status: "error",
+      Message: "failed to get user_id",
+    }
+    w.WriteHeader(http.StatusInternalServerError)
+    json.NewEncoder(w).Encode(resp)
+    return
+  }
+  result := database.DB.Where("user_id = ?",user_id).Delete(&models.User{})
+  if result.RowsAffected == 0 {
+    resp := response{
+      Status: "fail",
+      Message: "User with this ID does not exists",
+    }
+    w.WriteHeader(http.StatusNotFound)
+    json.NewEncoder(w).Encode(resp)
+    return
+  }
+  if result.Error != nil {
+    resp := response {
+      Status: "error",
+      Message: "Failed to delete user",
+    }
+    w.WriteHeader(http.StatusInternalServerError)
+    json.NewEncoder(w).Encode(resp)
+    return
+  }
+  resp := response {
+    Status: "success",
+    Message: "user deleted successfully",
+  }
+  w.WriteHeader(http.StatusOK)
+  json.NewEncoder(w).Encode(resp)
 }
 
 var GetUser http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +147,6 @@ var LoginUser http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
         Password string `json:"password" validate:"required,min=4"`
       }
     var request body
-    w.Header().Set("Content-Type", "application/json")
     if r.Body == nil {
         resp := response{
             Status:  "error",
