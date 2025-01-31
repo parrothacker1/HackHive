@@ -1,3 +1,10 @@
 1) an L7 cacher .. (https://github.com/AnimeKaizoku/cacher for caching)
 2) Rolling Keys for jwt
 3) Diff SSL certs for diff users
+4) Swagger docs
+5) Add logstash
+6) Rate limiting with priority to CreateUser
+
+TODOS:
+1) Complete Team's handlers
+2) Write LeaveTeam Logic
