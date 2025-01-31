@@ -81,8 +81,8 @@ var CreateUser http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(resp)
   } else {
     type response_jwt struct {
-      Status string
-      Token string
+      Status string   `json:"status"`
+      Token string    `json:"token"`
     } 
     resp := response_jwt {
       Status: "success",
@@ -94,7 +94,82 @@ var CreateUser http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
 }
 
 var UpdateUser http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
-  w.Write([]byte("updating user"))
+  validate := validator.New()
+  user_id,ok := r.Context().Value("user_id").(string)
+  if user_id == "" || !ok {
+    resp := response {
+      Status: "error",
+      Message: "failed to get user_id",
+    }
+    w.WriteHeader(http.StatusInternalServerError)
+    json.NewEncoder(w).Encode(resp)
+    return
+  }
+  type body struct {
+    Name    string    `json:"name" validate:"min=3"`
+    Email   string    `json:"email" validate:"email"` 
+  }
+  var request body
+  if r.Body == nil {
+    resp := response{
+      Status:  "error",
+      Message: "Invalid body",
+    }
+    w.WriteHeader(http.StatusBadRequest)
+    json.NewEncoder(w).Encode(resp)
+    return
+  }
+  if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+    resp := response{
+      Status:  "error",
+      Message: "Invalid body format",
+    }
+    w.WriteHeader(http.StatusBadRequest)
+    json.NewEncoder(w).Encode(resp)
+    return
+  }
+  if err := validate.Struct(request); err != nil {
+    resp := response{
+      Status:  "error",
+      Message: "Error with validation of data: " + err.Error(),
+    }
+    w.WriteHeader(http.StatusBadRequest)
+    json.NewEncoder(w).Encode(resp)
+    return
+  }
+  if result := database.DB.Model(&models.User{}).Where("user_id = ?",user_id).Updates(models.User{Name: request.Name,Email: request.Email}); result.Error != nil || result.RowsAffected == 0 {
+    if result.Error == gorm.ErrRecordNotFound {
+      resp := response {
+        Status: "fail",
+        Message: "The user with this ID does not exist",
+      }
+      w.WriteHeader(http.StatusNotFound)
+      json.NewEncoder(w).Encode(resp)
+      return
+    } else if result.Error == gorm.ErrDuplicatedKey {
+      resp := response {
+        Status: "fail",
+        Message: "The email is already occupied",
+      }
+      w.WriteHeader(http.StatusConflict)
+      json.NewEncoder(w).Encode(resp)
+      return
+    } else {
+      resp := response {
+        Status: "error",
+        Message: "Failed to update the user data",
+      }
+      w.WriteHeader(http.StatusInternalServerError)
+      json.NewEncoder(w).Encode(resp)
+      return
+    }
+  }
+  resp := response {
+    Status: "success",
+    Message: "User data has been updated successfully",
+  }
+  w.WriteHeader(http.StatusOK)
+  json.NewEncoder(w).Encode(resp)
 }
 
 var DeleteUser http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
@@ -136,7 +211,52 @@ var DeleteUser http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
 }
 
 var GetUser http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
-  w.Write([]byte("get user details"))
+  user_id, ok := r.Context().Value("user_id").(string)
+  if user_id == "" || !ok {
+    resp := response {
+      Status: "error",
+      Message: "failed to get user_id",
+    }
+    w.WriteHeader(http.StatusInternalServerError)
+    json.NewEncoder(w).Encode(resp)
+    return
+  }
+  var user_data models.User
+  if err := database.DB.Table("users").Where("user_id = ?").Find(&user_data).Error; err != nil {
+    if err == gorm.ErrRecordNotFound {
+      resp := response {
+        Status: "fail",
+        Message: "The user with this ID does not exist",
+      }
+      w.WriteHeader(http.StatusNotFound)
+      json.NewEncoder(w).Encode(resp)
+      return
+    } else {
+      resp := response {
+        Status: "error",
+        Message: "Failed to retrive data from server",
+      }
+      w.WriteHeader(http.StatusInternalServerError)
+      json.NewEncoder(w).Encode(resp)
+      return
+    }
+  }
+  type response_success struct {
+    Status    string                  `json:"status"`;
+    Data      map[string]interface{} `json:"details"`;
+  }
+  resp := response_success {
+    Status: "success",
+    Data: map[string]interface{}{
+      "name": user_data.Name,
+      "email": user_data.Email,
+      "role": user_data.Role,
+      "team_id": user_data.TeamID,
+      "points": user_data.Points,
+    },
+  }
+  w.WriteHeader(http.StatusOK)
+  json.NewEncoder(w).Encode(resp)
 }
 
 
@@ -240,5 +360,82 @@ var LoginUser http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
 
 
 var ResetPassword http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
-  w.Write([]byte("reset password of user"))
+  user_id,ok := r.Context().Value("user_id").(string)
+  validate := validator.New()
+  type body struct {
+    Password string `json:"password" validate:"required,min=4"`
+  }
+  var request body
+  if r.Body == nil {
+    resp := response{
+      Status:  "error",
+      Message: "Invalid body",
+    }
+    w.WriteHeader(http.StatusBadRequest)
+    json.NewEncoder(w).Encode(resp)
+    return
+  }
+  if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+    resp := response{
+      Status:  "error",
+      Message: "Invalid body format",
+    }
+    w.WriteHeader(http.StatusBadRequest)
+    json.NewEncoder(w).Encode(resp)
+    return
+  }
+  if err := validate.Struct(request); err != nil {
+    resp := response{
+      Status:  "error",
+      Message: "Error with validation of data: " + err.Error(),
+    }
+    w.WriteHeader(http.StatusBadRequest)
+    json.NewEncoder(w).Encode(resp)
+    return
+  }
+  if user_id == "" || !ok {
+    resp := response {
+      Status: "error",
+      Message: "Failed to get the user ID",
+    }
+    w.WriteHeader(http.StatusInternalServerError)
+    json.NewEncoder(w).Encode(resp)
+    return
+  }
+  var user_data models.User
+  if err := database.DB.Table("user").Where("user_id = ?",user_id).First(&user_data).Error; err != nil {
+    if err == gorm.ErrRecordNotFound {
+      resp := response{
+        Status: "fail",
+        Message: "User with this ID does not exist",
+      }
+      w.WriteHeader(http.StatusNotFound)
+      json.NewEncoder(w).Encode(resp)
+      return
+    } else {
+      resp := response{
+        Status: "error",
+        Message: "Failed to retrive data",
+      }
+      w.WriteHeader(http.StatusInternalServerError)
+      json.NewEncoder(w).Encode(resp)
+      return
+    }
+  }
+  user_data.SetPassword(request.Password)
+  if result := database.DB.Table("users").Where("user_id = ?").Update("user_password",user_data.Password); result.Error != nil || result.RowsAffected == 0 {
+    resp := response{
+      Status: "error",
+      Message: "Failed to update the password",
+    }
+    w.WriteHeader(http.StatusInternalServerError)
+    json.NewEncoder(w).Encode(resp)
+    return
+  }
+  resp := response{
+    Status: "success",
+    Message: "Password reset successfully",
+  }
+  w.WriteHeader(http.StatusOK)
+  json.NewEncoder(w).Encode(resp)
 }
