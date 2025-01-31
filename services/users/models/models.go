@@ -32,6 +32,9 @@ func (User) TableName() string {
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
   u.UserID = uuid.NewString()
+  if u.Password == "" {
+    return fmt.Errorf("The password is not set")
+  }
   return nil
 }
 
@@ -39,9 +42,6 @@ func (u *User) BeforeSave(tx *gorm.DB) error {
   if u.Role == "admin" || u.Role == "moderator" {
     u.TeamID = nil
     u.Points = nil
-  }
-  if (u.Password == "") {
-    return fmt.Errorf("The password is not set")
   }
   return nil
 }
