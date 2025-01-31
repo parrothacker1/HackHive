@@ -106,8 +106,8 @@ var UpdateUser http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
     return
   }
   type body struct {
-    Name    string    `json:"name" validate:"min=3"`
-    Email   string    `json:"email" validate:"email"` 
+    Name    string    `json:"name" validate:"omitempty,min=3"`
+    Email   string    `json:"email" validate:"omitempty,email"` 
   }
   var request body
   if r.Body == nil {
@@ -128,16 +128,33 @@ var UpdateUser http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(resp)
     return
   }
-  if err := validate.Struct(request); err != nil {
-    resp := response{
-      Status:  "error",
-      Message: "Error with validation of data: " + err.Error(),
+  if err := validate.Struct(request); err != nil || (request.Name == "" && request.Email == "") {
+    if err != nil {
+      resp := response{
+        Status:  "error",
+        Message: "Error with validation of data: " + err.Error(),
+      }
+      w.WriteHeader(http.StatusBadRequest)
+      json.NewEncoder(w).Encode(resp)
+      return
+    } else {
+      resp := response{
+        Status: "error",
+        Message: "Both fiels cannot be empty",
+      }
+      w.WriteHeader(http.StatusBadRequest)
+      json.NewEncoder(w).Encode(resp)
+      return
     }
-    w.WriteHeader(http.StatusBadRequest)
-    json.NewEncoder(w).Encode(resp)
-    return
   }
-  if result := database.DB.Model(&models.User{}).Where("user_id = ?",user_id).Updates(models.User{Name: request.Name,Email: request.Email}); result.Error != nil || result.RowsAffected == 0 {
+  update_data := map[string]interface{}{}
+  if request.Name != "" {
+    update_data["user_name"]=request.Name
+  }
+  if request.Email != "" {
+    update_data["user_email"]=request.Email
+  }
+  if result := database.DB.Model(&models.User{}).Where("user_id = ?",user_id).Updates(update_data); result.Error != nil || result.RowsAffected == 0 {
     if result.Error == gorm.ErrRecordNotFound {
       resp := response {
         Status: "fail",
@@ -403,7 +420,7 @@ var ResetPassword http.HandlerFunc = func(w http.ResponseWriter, r *http.Request
     return
   }
   var user_data models.User
-  if err := database.DB.Table("user").Where("user_id = ?",user_id).First(&user_data).Error; err != nil {
+  if err := database.DB.Table("users").Where("user_id = ?",user_id).First(&user_data).Error; err != nil {
     if err == gorm.ErrRecordNotFound {
       resp := response{
         Status: "fail",
@@ -423,7 +440,7 @@ var ResetPassword http.HandlerFunc = func(w http.ResponseWriter, r *http.Request
     }
   }
   user_data.SetPassword(request.Password)
-  if result := database.DB.Table("users").Where("user_id = ?").Update("user_password",user_data.Password); result.Error != nil || result.RowsAffected == 0 {
+  if result := database.DB.Table("users").Where("user_id = ?",user_id).Update("user_password",user_data.Password); result.Error != nil || result.RowsAffected == 0 {
     resp := response{
       Status: "error",
       Message: "Failed to update the password",
